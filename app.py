@@ -1,113 +1,165 @@
 
-
 def init():
     """- инициализируем данные"""
 
-    # переменные с крестиком и ноликом
+    # крестик и нолик
     cross = "X"
-    zero = "O"
+    zero = "0"
 
-    # наименование строк
+    # строки
     lines = ["1", "2", "3"]
 
-    # наименование столбцов
+    # столбцы
     columns = ["a", "b", "c"]
 
-    # все варианты ходов
-    all_options = [
-        column + line
-        for line in lines
-        for column in columns
+    # клетки - наименование и индекс
+    count = 0
+    cells = {}
+
+    for column in columns:
+        for line in lines:
+            cells[column + line] = count
+            count += 1
+
+    # положительные варианты
+    win_cells = [
+        [0, 4, 8], [2, 4, 6],
+        [0, 3, 6], [1, 4, 7], [2, 5, 8],
+        [0, 1, 2], [3, 4, 5], [6, 7, 8]
     ]
 
-    # Список с положительными вариантами
-    positive_options = [
-        # по диагонали
-        ["a1", "b2", "c3"], ["a3", "b2", "c1"],
+    # занятые клетки нолика
+    lst_0 = []  # Сортировать .sort()
 
-        # получить вертикальные варианты
-        *[all_options[i::3] for i in range(3)],
+    # занятые клетки крестика
+    lst_x = []
 
-        # получить горизонтальные варианты
-        *[all_options[i:i+3] for i in range(0, 7, 3)]
-    ]
+    # Список с выбывшими клетками
+    exc_cells = []
 
-    # Список с выбывшими ходами
-    exc_steps = []
-
-    # игрок один
-    player_1 = []  # Сортировать .sort()
-
-    # игрок второй
-    player_2 = []
-
-    # хранить очередь
-    queue = None
-
-    return cross, zero, lines, positive_options, exc_steps, player_1, player_2, queue
+    return cross, zero, win_cells, lst_x, lst_0, exc_cells, list(cells.keys()), cells
 
 
-def template(steps):
+def template(lst):
     """- шаблон сетки"""
-    if not steps:
-        steps = [" "]*9
-
     string = """
     
-         a.  b.  c.
-
-    1.   {0} | {1} | {2}
-       ----+---+----
-    2.   {3} | {4} | {5}
-       ----+---+----
-    3.   {6} | {7} | {8}
-    
-    """.format(*steps)
+          a.   b.   c.
+       +---------------+
+    1. |  {0} |  {1}  | {2}  |
+       |----+-----+----|
+    2. |  {3} |  {4}  | {5}  |
+       |----+-----+----|
+    3. |  {6} |  {7}  | {8}  |
+       +---------------+
+    """.format(*lst)
     return string
 
 
-def is_finish():
-    pass
+def set_sign():
+    """- Выбор знака"""
+    while True:
+        result = input("Укажите значок для игры - X или 0: ")
+        if result == "X" or result == "0":
+            return result
+        else:
+            print("Вы указали не верные данные")
 
 
-def is_victory(positive_steps, step):
-    """- проверка победы"""
-    if step in positive_steps:
+def is_victory(lst, win_lst):
+    """- проверка победного варианта"""
+    if lst in win_lst:
         return True
+
     return False
-
-
-def is_taken(step, lis):
-    """- проверка на пустоту"""
-    if step in lis:
-        return False
-    return True
 
 
 def revers_str(string):
+    """- отразить строку зеркально"""
     return ''.join(list(reversed(string)))
 
 
-def is_step(all_steps, step):
-    """- проверка хода на существование"""
-    if step in all_steps:
-        return True
-
-    elif revers_str(step) in all_steps:
+def cell_employed(lst, sign):
+    """- проверка на использование координат раннее"""
+    if sign not in lst or revers_str(sign) not in lst:
         return True
 
     return False
 
 
-def main():
-    """- точка входа"""
+def cell_valid(lst, sign):
+    """- Проверка введенных координат на существование"""
+    if sign in lst:
+        return True
+
+    return False
+
+
+def is_cell(exc_lst, coord_cells, sign):
+    """- проверка введенные координаты на валидность"""
     while True:
-        print(template([]))
-        print(template(list(range(10))))
-        init()
-        break
+        input_sign = input("Укажите координаты ячейки - {0}: ".format(sign))
+
+        if cell_valid(coord_cells, input_sign):
+            if cell_employed(exc_lst, input_sign):
+                return input_sign
+
+            print("Вы указали координаты уже занятой ячейки: {0}".format(input_sign))
+
+        else:
+            print("Вы указали не существующие координаты: {0}".format(input_sign))
+
+
+def main():
+    """- реализация"""
+
+    # Логика работы
+
+    # пустой список с данными ввода в клетки
+    result = [" "] * 9
+
+    # указать знак игрока X или 0
+    sign = set_sign()
+
+    # Распечатать пустую таблицу
+    print(template(result))
+
+    print("Для выбора клетки укажите ее координаты a1 или 1a, смотрите таблицу выше.")
+
+    print("="*50)
+
+    # инициализируем реестр
+    cross, zero, win_cells, lst_cross, lst_zero, exc_cells, coord_cells, cells = init()
+
+    while True:
+
+        # проверка валидности ячейки
+        input_sign = is_cell(exc_cells, coord_cells, sign)
+
+        # добавить валидные данные в список примененных клеток
+        exc_cells.append(input_sign)
+
+        # введенные координаты добавляем в список result
+        ind = cells.get(input_sign)
+        result[ind] = sign
+
+        # распечатать введенные координаты
+        print(template(result))
+
+        # добавить данные в список значка
+        if sign == cross:
+            lst_cross.append(input_sign)
+
+        elif sign == zero:
+            lst_zero.append(input_sign)
+
+        # проверка победителя
+        if is_victory(lst_cross, win_cells):
+            print("Победили: ", sign)
+
+        if is_victory(lst_zero, win_cells):
+            print("Победили: ", sign)
 
 
 if __name__ == '__main__':
     main()
-
