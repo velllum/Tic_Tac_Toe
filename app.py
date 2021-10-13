@@ -20,50 +20,47 @@ def init():
         for column in columns
     ]
 
-    print(all_options)
-    print(all_options[::3])
-    print(all_options[1::3])
-    print(all_options[2::3])
-
     # Список с положительными вариантами
-    positive_options = [  # применить срезы
+    positive_options = [
         # по диагонали
-        ["a1", "b2", "c3"],
-        ["a3", "b2", "c1"],
-        # по вертикали
-        ["a1", "a2", "a3"],
-        ["b1", "b2", "b3"],
-        ["c1", "c2", "c3"],
-        # по горизонтали
-        ["a1", "b1", "c1"],
-        ["a2", "b2", "c2"],
-        ["a3", "b3", "c3"],
+        ["a1", "b2", "c3"], ["a3", "b2", "c1"],
+
+        # получить вертикальные варианты
+        *[all_options[i::3] for i in range(3)],
+
+        # получить горизонтальные варианты
+        *[all_options[i:i+3] for i in range(0, 7, 3)]
     ]
 
     # Список с выбывшими ходами
     exc_steps = []
 
     # игрок один
-    player_1 = None  # Сортировать
+    player_1 = []  # Сортировать .sort()
 
     # игрок второй
-    player_2 = None
+    player_2 = []
 
-    # чея очередь
+    # хранить очередь
     queue = None
+
+    return cross, zero, lines, positive_options, exc_steps, player_1, player_2, queue
 
 
 def template(steps):
     """- шаблон сетки"""
+    if not steps:
+        steps = [" "]*9
+
     string = """
     
          a.  b.  c.
-       
-    1.   0 | 0 | X
-        ---+---+---
-    2.   0 | 0 | 0
-        ---+---+---
-    3.   0 | 0 | 0
+
+    1.   {0} | {1} | {2}
+       ----+---+----
+    2.   {3} | {4} | {5}
+       ----+---+----
+    3.   {6} | {7} | {8}
     
     """.format(*steps)
     return string
@@ -73,23 +70,40 @@ def is_finish():
     pass
 
 
-def is_victory():
+def is_victory(positive_steps, step):
     """- проверка победы"""
-    # комбинации вариантов победы
-    pass
+    if step in positive_steps:
+        return True
+    return False
 
 
 def is_taken(step, lis):
-    """- проверка на пустоту ячейки сетки"""
+    """- проверка на пустоту"""
     if step in lis:
         return False
     return True
+
+
+def revers_str(string):
+    return ''.join(list(reversed(string)))
+
+
+def is_step(all_steps, step):
+    """- проверка хода на существование"""
+    if step in all_steps:
+        return True
+
+    elif revers_str(step) in all_steps:
+        return True
+
+    return False
 
 
 def main():
     """- точка входа"""
     while True:
         print(template([]))
+        print(template(list(range(10))))
         init()
         break
 
