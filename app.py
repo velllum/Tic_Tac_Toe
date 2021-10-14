@@ -1,4 +1,5 @@
 
+
 def init():
     """- инициализируем данные"""
 
@@ -17,24 +18,30 @@ def init():
 
     # положительные варианты ходов
     win_cells = [
-        [0, 4, 8], [2, 4, 6],
-        [0, 3, 6], [1, 4, 7], [2, 5, 8],
-        [0, 1, 2], [3, 4, 5], [6, 7, 8]
+        {0, 4, 8}, {2, 4, 6},
+        {0, 3, 6}, {1, 4, 7}, {2, 5, 8},
+        {0, 1, 2}, {3, 4, 5}, {6, 7, 8},
     ]
 
     # словарь с ходами игроков
     steps = {
-        cross: [],
-        zero: []
+        cross: set(),
+        zero: set(),
     }
 
-    return cross, zero, win_cells, steps, cells
+    # пустой список с данными ввода в таблицу
+    data_table = [" "] * len(cells)
+
+    # переменная значка, пустая
+    sign = ""
+
+    return cross, zero, win_cells, steps, cells, data_table, sign
 
 
-def template(lst):
+def print_template(lst):
     """- шаблон сетки"""
     string = """
-    
+
           a.   b.   c.
        +---------------+
     1. |  {0} |  {1}  | {2}  |
@@ -43,26 +50,27 @@ def template(lst):
        |----+-----+----|
     3. |  {6} |  {7}  | {8}  |
        +---------------+
+       
     """.format(*lst)
-    return string
+    print(string)
 
 
-def set_sign():
+def set_sign(cross, zero):
     """- Выбор знака"""
     while True:
         result = input("Укажите значок для игры - X или 0: ")
-        if result == "X" or result == "0":
+        if result == cross or result == zero:
             return result
         else:
             print("Вы указали не верные данные")
 
 
-def is_victory(lst, win_lst):
+def is_victory(steps, win_lst):
     """- проверка победного варианта"""
-    if lst in win_lst:
-        return True
-
-    return False
+    for win in win_lst:
+        if win.issubset(steps):
+            return win
+        return False
 
 
 def revers_str(string):
@@ -70,35 +78,48 @@ def revers_str(string):
     return ''.join(list(reversed(string)))
 
 
-def cell_employed(lst, sign):
-    """- проверка на использование координат раннее"""
-    if sign not in lst or revers_str(sign) not in lst:
-        return True
-
-    return False
-
-
-def cell_valid(lst, sign):
-    """- Проверка введенных координат на существование"""
-    if sign in lst:
-        return True
-
-    return False
+def get_ind_coord(ind, ind_rev):
+    """- получить индекс координаты"""
+    if not ind:
+        ind = ind_rev
+    return ind
 
 
-def is_cell(exc_lst, coord_cells, sign):
-    """- проверка введенные координаты на валидность"""
+def rewrite_table(lst, ind, sign):
+    """- перезаписать данные таблицы"""
+    lst[ind] = sign
+    return lst
+
+
+def get_coord(ind_lst, steps_lst, sign):
+    """- получить введенные координаты ячейки"""
     while True:
-        input_sign = input("Укажите координаты ячейки - {0}: ".format(sign))
 
-        if cell_valid(coord_cells, input_sign):
-            if cell_employed(exc_lst, input_sign):
-                return input_sign
+        coord = input("Укажите координаты ячейки - {0}: ".format(sign))
 
-            print("Вы указали координаты уже занятой ячейки: {0}".format(input_sign))
+        # проверка введенные координаты на валидность
+        if coord in ind_lst or revers_str(coord) in ind_lst:
 
+            # проверка веденные координаты на использование ранее
+            if coord not in steps_lst:
+                return coord
+            else:
+                print("Данная ячейка уже занята: {0}".format(coord))
+                print("-" * 50)
         else:
-            print("Вы указали не существующие координаты: {0}".format(input_sign))
+            print("Такой ячейки с координатами не существует: {0}".format(coord))
+            print("-" * 50)
+
+
+def get_sign(cross, zero, sign):
+    """- выбрать игроку значок"""
+    if not sign:
+        return set_sign(cross, zero)
+
+    # поменять значок на противоположный
+    if sign == cross:
+        return zero
+    return cross
 
 
 def main():
@@ -106,50 +127,61 @@ def main():
 
     # Логика работы
 
-    # пустой список с данными ввода в клетки
-    result = [" "] * 9
-
-    # указать знак игрока X или 0
-    sign = set_sign()
+    # инициализируем реестр
+    cross, zero, win_cells, steps, cells, data_table, sign = init()
 
     # Распечатать пустую таблицу
-    print(template(result))
+    print_template(data_table)
 
     print("Для выбора клетки укажите ее координаты a1 или 1a, смотрите таблицу выше.")
-
-    print("="*50)
-
-    # инициализируем реестр
-    cross, zero, win_cells, lst_cross, lst_zero, exc_cells, coord_cells, cells = init()
+    print("=" * 50)
 
     while True:
 
-        # проверка валидности ячейки
-        input_sign = is_cell(exc_cells, coord_cells, sign)
+        # поменять значок на противоположный, второго игрока
+        sign = get_sign(
+            cross=cross,
+            zero=zero,
+            sign=sign,
+        )
 
-        # добавить валидные данные в список примененных клеток
-        exc_cells.append(input_sign)
+        # получить координаты ячейки
+        coordinates = get_coord(
+            ind_lst=cells.keys(),
+            steps_lst=[*steps.get(cross), *steps.get(zero)],
+            sign=sign,
+        )
 
-        # введенные координаты добавляем в список result
-        ind = cells.get(input_sign)
-        result[ind] = sign
+        # получить индекс координаты
+        index_coord = get_ind_coord(
+            ind=cells.get(coordinates),
+            ind_rev=cells.get(revers_str(coordinates)),
+        )
+
+        # перезаписать таблицу
+        data = rewrite_table(
+            lst=data_table,
+            ind=index_coord,
+            sign=sign,
+        )
+
+        # добавить индекс в список текущего игрока, с выбранным значком
+        steps[sign].add(index_coord)
+
 
         # распечатать введенные координаты
-        print(template(result))
+        print_template(data)
 
-        # добавить данные в список значка
-        if sign == cross:
-            lst_cross.append(input_sign)
 
-        elif sign == zero:
-            lst_zero.append(input_sign)
+        #
+        # # проверка победителя
+        # if is_victory(lst_cross, win_cells):
+        #     print("Победили: ", sign)
+        #
+        # if is_victory(lst_zero, win_cells):
+        #     print("Победили: ", sign)
 
-        # проверка победителя
-        if is_victory(lst_cross, win_cells):
-            print("Победили: ", sign)
-
-        if is_victory(lst_zero, win_cells):
-            print("Победили: ", sign)
+        break
 
 
 if __name__ == '__main__':
