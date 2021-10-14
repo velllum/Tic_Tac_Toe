@@ -6,38 +6,29 @@ def init():
     cross = "X"
     zero = "0"
 
-    # строки
-    lines = ["1", "2", "3"]
-
-    # столбцы
-    columns = ["a", "b", "c"]
-
-    # клетки - наименование и индекс
+    # координаты всех клеток с индексов в значении
     count = 0
     cells = {}
 
-    for column in columns:
-        for line in lines:
+    for column in ["a", "b", "c"]:
+        for line in ["1", "2", "3"]:
             cells[column + line] = count
             count += 1
 
-    # положительные варианты
+    # положительные варианты ходов
     win_cells = [
         [0, 4, 8], [2, 4, 6],
         [0, 3, 6], [1, 4, 7], [2, 5, 8],
         [0, 1, 2], [3, 4, 5], [6, 7, 8]
     ]
 
-    # занятые клетки нолика
-    lst_0 = []  # Сортировать .sort()
+    # словарь с ходами игроков
+    steps = {
+        cross: [],
+        zero: []
+    }
 
-    # занятые клетки крестика
-    lst_x = []
-
-    # Список с выбывшими клетками
-    exc_cells = []
-
-    return cross, zero, win_cells, lst_x, lst_0, exc_cells, list(cells.keys()), cells
+    return cross, zero, win_cells, steps, cells
 
 
 def template(lst):
