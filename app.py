@@ -151,9 +151,9 @@ def get_busy_steps(lst, dct):
     return lst_coord
 
 
-def check_draw(lst, dct):
+def check_draw(len_steps, len_cells):
     """- проверка на ничью"""
-    if len(lst) == len(dct):
+    if len_steps == len_cells:
         return True
     return False
 
@@ -228,8 +228,8 @@ def main():
 
         # если получили ничью
         if check_draw(
-                lst=[*steps.get(cross), *steps.get(zero)],
-                dct=cells
+                len_steps=len([*steps.get(cross), *steps.get(zero)]),
+                len_cells=len(cells)
         ):
             print_template(
                 lst=draw_table
