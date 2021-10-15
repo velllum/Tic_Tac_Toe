@@ -140,11 +140,11 @@ def show_win_table(lst_data, lst_win):
     return lst_data
 
 
-def get_busy_steps(lst, dct):
+def get_busy_steps(lst, items):
     """- получить список координат занятых ячеек, из словаря cells"""
     lst_coord = []
 
-    for key, value in dct.items():
+    for key, value in items:
         if value in lst:
             lst_coord.append(key)
 
@@ -186,7 +186,7 @@ def main():
             ind_lst=cells.keys(),
             steps_lst=get_busy_steps(
                 lst=[*steps.get(cross), *steps.get(zero)],
-                dct=cells,
+                items=cells.items(),
             ),
             sign=sign,
         )
