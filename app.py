@@ -1,7 +1,7 @@
 
 
 def init():
-    """- инициализируем данные"""
+    """- инициализация, подготовка данных"""
 
     # крестик и нолик
     cross = "X"
@@ -11,8 +11,8 @@ def init():
     count = 0
     cells = {}
 
-    for column in ["a", "b", "c"]:
-        for line in ["1", "2", "3"]:
+    for line in ["1", "2", "3"]:
+        for column in ["a", "b", "c"]:
             cells[column + line] = count
             count += 1
 
@@ -32,14 +32,17 @@ def init():
     # пустой список с данными ввода в таблицу
     data_table = [" "] * len(cells)
 
+    # список ничьей ввода в таблицу
+    draw_table = ["*"] * len(cells)
+
     # переменная значка, пустая
     sign = ""
 
-    return cross, zero, win_cells, steps, cells, data_table, sign
+    return cross, zero, win_cells, steps, cells, data_table, sign, draw_table
 
 
 def print_template(lst):
-    """- шаблон сетки"""
+    """- напечатать шаблон таблицы"""
     string = """
 
           a.   b.   c.
@@ -65,22 +68,14 @@ def set_sign(cross, zero):
             print("Вы указали не верные данные")
 
 
-def is_victory(steps, win_lst):
-    """- проверка победного варианта"""
-    for win in win_lst:
-        if win.issubset(steps):
-            return win
-        return False
-
-
 def revers_str(string):
-    """- отразить строку зеркально"""
+    """- отобразить строку зеркально"""
     return ''.join(list(reversed(string)))
 
 
-def get_ind_coord(ind, ind_rev):
-    """- получить индекс координаты"""
-    if not ind:
+def get_correct_index(ind, ind_rev):
+    """- получить корректный индекс координаты"""
+    if ind is None:
         ind = ind_rev
     return ind
 
@@ -91,17 +86,18 @@ def rewrite_table(lst, ind, sign):
     return lst
 
 
-def get_coord(ind_lst, steps_lst, sign):
-    """- получить введенные координаты ячейки"""
+def get_coordinates(ind_lst, steps_lst, sign):
+    """- получить, проверить введенные координаты ячейки"""
     while True:
 
-        coord = input("Укажите координаты ячейки - {0}: ".format(sign))
+        coord = input("Укажите координаты ячейки для ( {0} ): ".format(sign))
+        coord_revers = revers_str(coord)
 
         # проверка введенные координаты на валидность
-        if coord in ind_lst or revers_str(coord) in ind_lst:
+        if coord in ind_lst or coord_revers in ind_lst:
 
             # проверка веденные координаты на использование ранее
-            if coord not in steps_lst:
+            if coord not in steps_lst and coord_revers not in steps_lst:
                 return coord
             else:
                 print("Данная ячейка уже занята: {0}".format(coord))
@@ -113,6 +109,8 @@ def get_coord(ind_lst, steps_lst, sign):
 
 def get_sign(cross, zero, sign):
     """- выбрать игроку значок"""
+
+    # если значка нет, то установить его
     if not sign:
         return set_sign(cross, zero)
 
@@ -122,13 +120,51 @@ def get_sign(cross, zero, sign):
     return cross
 
 
+def check_victory_option(lst, steps):
+    """- проверка победного варианта"""
+
+    # проверка множества на пустоту
+    if not steps:
+        return None
+
+    # сопоставить множества
+    for win in lst:
+        if win.issubset(steps):
+            return win
+
+
+def show_win_table(lst_data, lst_win):
+    """- отобразить победные данные в таблицы, переопределить data list"""
+    for w in lst_win:
+        lst_data[w] = "*"
+    return lst_data
+
+
+def get_busy_steps(lst, dct):
+    """- получить список координат занятых ячеек, из словаря cells"""
+    lst_coord = []
+
+    for key, value in dct.items():
+        if value in lst:
+            lst_coord.append(key)
+
+    return lst_coord
+
+
+def check_draw(lst, dct):
+    """- проверка на ничью"""
+    if len(lst) == len(dct):
+        return True
+    return False
+
+
 def main():
     """- реализация"""
 
     # Логика работы
 
     # инициализируем реестр
-    cross, zero, win_cells, steps, cells, data_table, sign = init()
+    cross, zero, win_cells, steps, cells, data_table, sign, draw_table = init()
 
     # Распечатать пустую таблицу
     print_template(data_table)
@@ -146,14 +182,17 @@ def main():
         )
 
         # получить координаты ячейки
-        coordinates = get_coord(
+        coordinates = get_coordinates(
             ind_lst=cells.keys(),
-            steps_lst=[*steps.get(cross), *steps.get(zero)],
+            steps_lst=get_busy_steps(
+                lst=[*steps.get(cross), *steps.get(zero)],
+                dct=cells,
+            ),
             sign=sign,
         )
 
-        # получить индекс координаты
-        index_coord = get_ind_coord(
+        # получить корректный индекс координаты
+        index_coord = get_correct_index(
             ind=cells.get(coordinates),
             ind_rev=cells.get(revers_str(coordinates)),
         )
@@ -168,21 +207,44 @@ def main():
         # добавить индекс в список текущего игрока, с выбранным значком
         steps[sign].add(index_coord)
 
+        # проверка победного варианта
+        win_cell = check_victory_option(
+            lst=win_cells,
+            steps=steps.get(sign),
+        )
+
+        # проверка, если данные не пусты игра закончена
+        if win_cell:
+            print_template(
+                lst=show_win_table(
+                    lst_data=data,
+                    lst_win=win_cell,
+                )
+            )
+            print("=" * 15)
+            print("Победили - {0}".format(sign))
+            print("=" * 15)
+            break
+
+        # если получили ничью
+        if check_draw(
+                lst=[*steps.get(cross), *steps.get(zero)],
+                dct=cells
+        ):
+            print_template(
+                lst=draw_table
+            )
+            print("=" * 15)
+            print("У Вас ничья")
+            print("=" * 15)
+            break
 
         # распечатать введенные координаты
-        print_template(data)
-
-
-        #
-        # # проверка победителя
-        # if is_victory(lst_cross, win_cells):
-        #     print("Победили: ", sign)
-        #
-        # if is_victory(lst_zero, win_cells):
-        #     print("Победили: ", sign)
-
-        break
+        print_template(lst=data)
 
 
 if __name__ == '__main__':
-    main()
+    try:
+        main()
+    except:
+        print("\nИгра была остановлена")
